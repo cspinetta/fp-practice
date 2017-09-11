@@ -2,6 +2,7 @@ package parallel
 
 import java.util.concurrent.{ExecutorService, _}
 
+import scala.collection.immutable
 import scala.concurrent.duration._
 
 //sealed trait Par[A]
@@ -29,15 +30,27 @@ object Par {
     UnitFuture(f(u1(es).get, u2(es).get))
   }
 
+  def map[A, B](fromPar: Par[A])(f: A => B): Par[B] = {
+    fromPar.map2(Par.unit(()))((a, _) => f(a))
+  }
+
   def asyncF[A, B](f: A => B): A => Par[B] = (a: A) => lazyUnit(f(a))
 
   def sequence[A](l: List[Par[A]]): Par[List[A]] = {
-    l.foldRight(unit(List.empty[A]))((par, b) => par.map2(b)(_ :: _))
+    l.foldRight(unit(List.empty[A]))((par, accResult) => par.map2(accResult)(_ :: _))
   }
 
-  def parMap[A, B](ps: List[A])(f: A => B): Par[List[B]] = {
+  def parMap[A, B](ps: List[A])(f: A => B): Par[List[B]] = fork {
     val list: List[Par[B]] = ps.map(asyncF(f))
     sequence(list)
+  }
+
+  def parFilter[A](as: List[A])(f: A => Boolean): Par[List[A]] = {
+//    as.foldRight(unit(List.empty[A]))((a, b) => if (f(a)) unit(a).map2(b)(_ :: _) else b)
+//    val pars: List[Par[List[A]]] = as.map
+//    val pars: Par[List[List[A]]] = fork(parMap(as)((a) => if (f(a)) List(a) else List.empty[A]))
+    val pars: List[Par[List[A]]] = as map ((elem: A) => lazyUnit { if (f(elem)) List(elem) else List.empty })
+    map(sequence(pars))(_.flatten)
   }
 
   object implicits {
@@ -80,10 +93,6 @@ object ParUtils {
 
   def sortPar(parList: Par[List[Int]]): Par[List[Int]] = {
     parList.map2(Par.unit(()))((l1, _) => l1.sorted)
-  }
-
-  def map[A, B](fromPar: Par[A])(f: A => B): Par[B] = {
-    fromPar.map2(Par.unit(()))((a, _) => f(a))
   }
 
   def sortParViaMap(parList: Par[List[Int]]): Par[List[Int]] = map(parList)(_.sorted)
