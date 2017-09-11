@@ -23,6 +23,6 @@ scalacOptions ++= Seq(
 libraryDependencies ++= Seq(
  "ch.qos.logback"        %   "logback-classic"        % "1.2.1",
  "com.github.pureconfig" %%  "pureconfig"             % "0.7.1",
-  "org.scalatest"        %% "scalatest"               % "3.0.1"  % "test"
+ "org.scalatest"        %% "scalatest"               % "3.0.1"  % "test"
 )
 
