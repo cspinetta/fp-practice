@@ -21,8 +21,11 @@ scalacOptions ++= Seq(
   "-Xfuture")
 
 libraryDependencies ++= Seq(
- "ch.qos.logback"        %   "logback-classic"        % "1.2.1",
- "com.github.pureconfig" %%  "pureconfig"             % "0.7.1",
- "org.scalatest"        %% "scalatest"               % "3.0.1"  % "test"
+ "ch.qos.logback"        %    "logback-classic"        % "1.2.1",
+ "com.github.pureconfig" %%   "pureconfig"             % "0.7.1",
+ "org.openjdk.jol"       %    "jol-core"               % "0.8",
+ "org.scalatest"         %%   "scalatest"              % "3.0.1"  % "test"
 )
+
+enablePlugins(JmhPlugin)
 
