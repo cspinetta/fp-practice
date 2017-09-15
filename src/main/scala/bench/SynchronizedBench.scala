@@ -1,7 +1,6 @@
 package bench
 
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 
 import org.openjdk.jmh.annotations._
 import sample.{AtomicCounter, SynchronizedCounter}
@@ -10,8 +9,8 @@ import sample.{AtomicCounter, SynchronizedCounter}
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Fork(value = 1)
-@Warmup(iterations = 10)
-@Measurement(iterations = 10)
+@Warmup(iterations = 1)
+@Measurement(iterations = 1)
 class SynchronizedBench {
 
   val syncCounter = new SynchronizedCounter()

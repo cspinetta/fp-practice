@@ -2,7 +2,7 @@ package parallel
 
 import java.util.concurrent.{ExecutorService, _}
 
-import scala.collection.immutable
+
 import scala.concurrent.duration._
 
 //sealed trait Par[A]
@@ -61,12 +61,9 @@ object Par {
 
     class ParOps[A](p: Par[A]) {
       def map2[B, C](other: Par[B])(f: (A, B) => C): Par[C] = Par.map2(p, other)(f)
+      def map[B](f: A => B): Par[B] = Par.map(p)(f)
     }
   }
-
-  // extracts a value from a Par by actually performing the computation
-  def run[A](s: ExecutorService)(par: Par[A]): Future[A] = par(s) // par match { case ForkPar(thunk) => thunk(); case UnitPar(value) => value }
-
 
   case class UnitFuture[A](get: A) extends Future[A] {
     override def cancel(mayInterruptIfRunning: Boolean): Boolean = false
@@ -74,6 +71,14 @@ object Par {
     override def isDone: Boolean = true
     override def get(timeout: Long, unit: TimeUnit): A = get
   }
+}
+
+object Interpreter {
+  import parallel.Par.Par
+
+  // extracts a value from a Par by actually performing the computation
+  def run[A](s: ExecutorService)(par: Par[A]): Future[A] = par(s) // par match { case ForkPar(thunk) => thunk(); case UnitPar(value) => value }
+
 }
 
 object ParUtils {
@@ -96,5 +101,21 @@ object ParUtils {
   }
 
   def sortParViaMap(parList: Par[List[Int]]): Par[List[Int]] = map(parList)(_.sorted)
+
+  def maxOptionPar(l: List[Int]): Par[Option[Int]] = {
+    if (l.size <= 1) lazyUnit(l.headOption)
+    else {
+      val (l1, l2) = l.splitAt(l.size / 2)
+      val (max1: Par[Option[Int]], max2: Par[Option[Int]]) = (maxOptionPar(l1), maxOptionPar(l2))
+      max1.map2(max2) {
+        case (r1@Some(a), r2@Some(b)) => if (a > b) r1 else r2
+        case (r1@Some(_), None) => r1
+        case (None, r2@Some(_)) => r2
+        case _ => None
+      }
+    }
+  }
+
+  def maxPar(list: List[Int]): Par[Int] = maxOptionPar(list).map(_.get)
 }
 

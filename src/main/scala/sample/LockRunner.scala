@@ -1,6 +1,6 @@
 package sample
 
-object Runner extends App {
+object LockRunner extends App {
 
   val threads = 10
   val quantityPerThread = 1000
