@@ -1,23 +1,23 @@
 package adt
 
-sealed trait OptionMonad[+T] {
+sealed trait OptionADT[+T] {
 
   def isDefined: Boolean
   def get: T
 }
 
-object OptionMonad {
-  def apply[T](v: T): OptionMonad[T] = if (v != null) Some(v) else None
+object OptionADT {
+  def apply[T](v: T): OptionADT[T] = if (v != null) Some(v) else None
 }
 
-case class Some[T](v: T) extends OptionMonad[T] {
+case class Some[T](v: T) extends OptionADT[T] {
 
   override def isDefined: Boolean = true
 
   override def get: T = v
 }
 
-case object None extends OptionMonad[Nothing] {
+case object None extends OptionADT[Nothing] {
 
   override def isDefined: Boolean = false
 

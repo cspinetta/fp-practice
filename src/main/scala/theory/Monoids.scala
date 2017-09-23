@@ -8,42 +8,42 @@ object Monoids {
     def zero: A
   }
 
-  val stringMonoid = new Monoid[String] {
+  val stringMonoid: Monoid[String] = new Monoid[String] {
     override def op(a1: String, a2: String) = a1 ++ a2
     override def zero = ""
   }
 
-  def listMonoid[A] = new Monoid[List[A]] {
+  def listMonoid[A]: Monoid[List[A]] = new Monoid[List[A]] {
     override def op(a1: List[A], a2: List[A]) = a1 ++ a2
     override def zero = List.empty[A]
   }
 
-  val intAddition = new Monoid[Int] {
+  val intAddition: Monoid[Int] = new Monoid[Int] {
     override def op(a1: Int, a2: Int) = a1 + a2
     override def zero = 0
   }
 
-  val intMultiplication = new Monoid[Int] {
+  val intMultiplication: Monoid[Int] = new Monoid[Int] {
     override def op(a1: Int, a2: Int) = a1 * a2
     override def zero = 1
   }
 
-  val boolOr = new Monoid[Boolean] {
+  val boolOr: Monoid[Boolean] = new Monoid[Boolean] {
     override def op(a1: Boolean, a2: Boolean) = a1 || a2
     override def zero = false
   }
 
-  val boolAnd = new Monoid[Boolean] {
+  val boolAnd: Monoid[Boolean] = new Monoid[Boolean] {
     override def op(a1: Boolean, a2: Boolean) = a1 && a2
     override def zero = true
   }
 
-  def optionMonoid[A] = new Monoid[Option[A]] {
+  def optionMonoid[A]: Monoid[Option[A]] = new Monoid[Option[A]] {
     override def op(a1: Option[A], a2: Option[A]) = a1.orElse(a2)
     override def zero = None
   }
 
-  def endoFuncMonoid[A] = new Monoid[A => A] {
+  def endoFuncMonoid[A]: Monoid[A => A] = new Monoid[A => A] {
     override def op(a1: (A) => A, a2: (A) => A) = a1 andThen a2
     override def zero = identity
   }
