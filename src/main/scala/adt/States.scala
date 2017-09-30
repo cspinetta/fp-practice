@@ -104,6 +104,12 @@ object States {
         (value :: acc, next2)
       }}
     }
+
+    def _ints(count: Int): Rand[List[Int]] = sequence(List.fill(count)(int))
+
+    def nonNegativeLessThan(n: Int): Rand[Int] = rng => {
+      ???
+    }
   }
 
   case class SimpleRNG(seed: Long) extends RNG {
