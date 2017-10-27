@@ -141,6 +141,22 @@ object States {
     }
 
   }
+
+  // Generalization of State Monad
+  type State[S, +A] = S => (A, S)
+
+  def flatMap[S, A, B](s: State[S, A])(f: A => State[S, B]): State[S, B] = ss => {
+    val (value, next) = s(ss)
+    f(value)(next)
+  }
+
+  abstract case class StateClass[S, +A](run: S => (A, S)) extends State[S, A]
+
+  type RandFromGeneral[A] = State[RNG, A]
+
+//  val ns: Rand[List[Int]] = for {
+//    a <- int
+//  }
 }
 
 object StateRunner extends App {
