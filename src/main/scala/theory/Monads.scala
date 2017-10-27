@@ -15,6 +15,22 @@ object Monads {
   // In other words:
   // A monad is an implementation of one of the minimal sets of monadic
   // combinators, satisfying the laws of associativity and identity
+  //
+  // But what is exactly??
+  // We could say that monads provide a context for introducing and binding variables,
+  // and performing variable substitution. For example:
+  //
+  // scala> for {
+  //   a <- Id("Hello, ")
+  //   b <- Id("monad!")
+  // } yield a + b
+  // res1: Id[java.lang.String] = Id(Hello, monad!)
+  //
+  // It's equivalent to:
+  //
+  // scala> "Hello, " + "monad!"
+  // res2: java.lang.String = Hello, monad!
+  //
   trait Monad[F[_]] extends Functors.Functor[F] {
 
     // possible primitives:
@@ -26,7 +42,7 @@ object Monads {
     // primitives:
     def unit[A](a: A): F[A]
 
-    def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B]
+    def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B] // = flatMapViaJoinAndMap(fa)(f)
 
     // combinations:
     override def map[A, B](fa: F[A])(f: (A) => B): F[B] = flatMap(fa)(f.andThen(unit))
@@ -83,4 +99,15 @@ object Monads {
     override def flatMap[A, B](fa: State[S, A])(f: A => State[S, B]) = States.flatMap(fa)(f)
   }
 
+  def idM = new Monad[Id] {
+    override def unit[A](a: A) = Id(a)
+    override def flatMap[A, B](fa: Id[A])(f: A => Id[B]): Id[B] = fa.flatMap(f)
+  }
+
+}
+
+// It's just a simple wrapper
+case class Id[A](value: A) {
+  def map[B](f: A => B): Id[B] = Id(f(value))
+  def flatMap[B](f: A => Id[B]): Id[B] = f(value)
 }
