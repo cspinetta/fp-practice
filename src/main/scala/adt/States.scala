@@ -9,7 +9,9 @@ object States {
     def nextInt: (Int, RNG)
   }
 
-  // State action (also called State transition)
+  // State action (also called State transition).
+  // It's NOT a randomly generated A, but a _program_ that describe
+  // how generate a randomly A from a RNG state
   type Rand[+A] = RNG => (A, RNG)
 
   object RNG {
@@ -143,16 +145,39 @@ object States {
   }
 
   // Generalization of State Monad
-  type State[S, +A] = S => (A, S)
+  type StateT[S, +A] = S => (A, S)
 
-  def flatMap[S, A, B](s: State[S, A])(f: A => State[S, B]): State[S, B] = ss => {
-    val (value, next) = s(ss)
-    f(value)(next)
+  case class State[S, A](run: StateT[S, A]) {
+
+    // Enrich via package object's implicits
+
+    def get(): State[S, S] = State(s => (s, s))
+    def set[T](s: T): State[T, Unit] = State(_ => ((), s))
   }
 
-  abstract case class StateClass[S, +A](run: S => (A, S)) extends State[S, A]
+  def unit[S, A](a: A): State[S, A] = State(x => (a, x))
 
-  type RandFromGeneral[A] = State[RNG, A]
+  def map[S, A, B](s: State[S, A])(f: A => B): State[S, B] = State(ss => {
+    val (value, next) = s.run(ss)
+    (f(value), next)
+  })
+
+  def map2[S, A, B, C](s1: State[S, A], s2: State[S, B])(f: (A, B) => C): State[S, C] = State(ss => {
+    val (value, next) = s1.run(ss)
+    val (value2, next2) = s2.run(next)
+    (f(value, value2), next2)
+  })
+
+  def flatMap[S, A, B](s: State[S, A])(f: A => State[S, B]): State[S, B] = State(ss => {
+    val (value, next) = s.run(ss)
+    f(value).run(next)
+  })
+
+  def sequence[S, A](s: List[State[S, A]]): State[S, List[A]] = {
+    s.foldLeft(unit[S , List[A]](Nil))(map2(_, _)((partialList, elem) => elem :: partialList))
+  }
+
+  type RandFromGeneral[A] = StateT[RNG, A]
 
 //  val ns: Rand[List[Int]] = for {
 //    a <- int
