@@ -147,12 +147,9 @@ object States {
   // Generalization of State Monad
   type StateT[S, +A] = S => (A, S)
 
-  case class State[S, A](run: StateT[S, A]) {
+  case class State[S, +A](run: S => (A, S)) {
 
     // Enrich via package object's implicits
-
-    def get(): State[S, S] = State(s => (s, s))
-    def set[T](s: T): State[T, Unit] = State(_ => ((), s))
   }
 
   def unit[S, A](a: A): State[S, A] = State(x => (a, x))
@@ -176,6 +173,15 @@ object States {
   def sequence[S, A](s: List[State[S, A]]): State[S, List[A]] = {
     s.foldLeft(unit[S , List[A]](Nil))(map2(_, _)((partialList, elem) => elem :: partialList))
   }
+
+  def modify[S](f: S => S): State[S, Unit] = for {
+    s <- get[S] // Gets the current state and assigns it to `s`.
+    _ <- set(f(s)) // Sets the new state to `f` applied to `s`.
+  } yield ()
+
+  def get[S]: State[S, S] = State(s => (s, s))
+
+  def set[S](s: S): State[S, Unit] = State(_ => ((), s))
 
   type RandFromGeneral[A] = StateT[RNG, A]
 
