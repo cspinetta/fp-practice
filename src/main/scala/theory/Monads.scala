@@ -96,7 +96,7 @@ object Monads {
 
   def stateMonad[S] = new Monad[({type lambda[x] = State[S, x]})#lambda] {
     override def unit[A](a: A): State[S, A] = States.unit(a)
-    override def flatMap[A, B](fa: State[S, A])(f: A => State[S, B]) = States.flatMap(fa)(f)
+    override def flatMap[A, B](fa: State[S, A])(f: A => State[S, B]): State[S, B] = States.flatMap(fa)(f)
   }
 
   def idM = new Monad[Id] {

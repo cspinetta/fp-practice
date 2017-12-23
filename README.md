@@ -9,8 +9,3 @@ Some features that purely functional programming involved:
 * modular
 * easily parallelizable
 
-```
-sbt jmh:run ".*.bench.*"
-```
-
-
