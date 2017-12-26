@@ -152,4 +152,79 @@ object HotelBooking {
     case class BookingResult(hotelId: Int, isBooked: Boolean, cause: String = "", updatedHotels: List[Hotel])
 
   }
+
+  // with no side-effect and no imperative approach
+  object WithNoSideEffectAndNoImperativeApproach {
+
+    case class HotelRequired(checking: LocalDate, checkout: LocalDate, paymentMethod: PaymentMethod) {
+      assert(!(checking.isAfter(checkout) || checking.isEqual(checkout)),
+        s"checking can not be greater or equal than checkout: checkin: $checking, checkout: $checkout")
+    }
+
+    trait BookingProgram {
+
+      def book(hotels: List[Hotel], hotelId: Int, hotelRequired: HotelRequired): BookingResult = {
+        hotels
+          .find(_.id == hotelId)
+          .map(hotel => bookHotel(hotelRequired)(hotel))
+          .getOrElse(BookingResult(None, isBooked = false,
+            cause = s"Hotel $hotelId doesn't exists"))
+      }
+
+      def bookHotel(hotelRequired: HotelRequired)(hotel: Hotel): BookingResult = {
+        hotel.book(hotelRequired.checking, hotelRequired.checkout, hotelRequired.paymentMethod)
+          .map(hotel => BookingResult(Some(hotel), isBooked = true))
+          .getOrElse(BookingResult(None, isBooked = false,
+            cause = s"Hotel is not available for the ${hotelRequired.checking} and ${hotelRequired.checkout} required"))
+      }
+    }
+
+    case class Hotel(id: Int, name: String, bookings: List[Booking] = Nil) {
+
+      def book(checking: LocalDate, checkout: LocalDate, paymentMethod: PaymentMethod): Option[Hotel] = {
+        if (this.isAvailable(checking, checkout)) {
+          val newBookings = Booking(checking, checkout, paymentMethod) +: this.bookings
+          Some(this.copy(bookings = newBookings))
+        } else
+          None
+      }
+
+      def isAvailable(checking: LocalDate, checkout: LocalDate): Boolean = {
+        bookings.forall(bkg => bkg.checking.isAfter(checkout) || bkg.checkout.isBefore(checking))
+      }
+    }
+
+    case class PaymentMethod(prepaid: Boolean)
+    case class Booking(checking: LocalDate, checkout: LocalDate, paymentMethod: PaymentMethod)
+
+    case class BookingResult(hotel: Option[Hotel], isBooked: Boolean, cause: String = "") {
+
+      def flatMap(f: Hotel => BookingResult): BookingResult = {
+        if (isBooked) {
+          val lastHotel = hotel.getOrElse(
+            throw new RuntimeException(s"Impossible case: isBooked=True and hotel=None: $this"))
+          f(lastHotel)
+        } else this
+      }
+    }
+
+  }
+}
+
+object BookingRunner extends App {
+
+  import HotelBooking.WithNoSideEffectAndNoImperativeApproach._
+
+  run()
+
+  def run(): Unit = {
+    val bookingProgram = new BookingProgram {}
+    val hotels: List[Hotel] = List(Hotel(1, "Panamericano Bs As"), Hotel(2, "Globales Republica"))
+    val bookingResult = bookingProgram
+      .book(hotels, 1, HotelRequired(LocalDate.now(), LocalDate.now().plusDays(2), PaymentMethod(prepaid = false)))
+      .flatMap(bookingProgram.bookHotel(HotelRequired(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5), PaymentMethod(prepaid = true))))
+
+    println(s"Finish with: $bookingResult")
+  }
+
 }
