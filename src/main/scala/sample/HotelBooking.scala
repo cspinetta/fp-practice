@@ -163,14 +163,6 @@ object HotelBooking {
 
     trait BookingProgram {
 
-      def book(hotels: List[Hotel], hotelId: Int, hotelRequired: HotelRequired): BookingResult = {
-        hotels
-          .find(_.id == hotelId)
-          .map(hotel => bookHotel(hotelRequired)(hotel))
-          .getOrElse(BookingResult(None, isBooked = false,
-            cause = s"Hotel $hotelId doesn't exists"))
-      }
-
       def bookHotel(hotelRequired: HotelRequired)(hotel: Hotel): BookingResult = {
         hotel.book(hotelRequired.checking, hotelRequired.checkout, hotelRequired.paymentMethod)
           .map(hotel => BookingResult(Some(hotel), isBooked = true))
@@ -219,10 +211,11 @@ object BookingRunner extends App {
 
   def run(): Unit = {
     val bookingProgram = new BookingProgram {}
-    val hotels: List[Hotel] = List(Hotel(1, "Panamericano Bs As"), Hotel(2, "Globales Republica"))
+    val hotel = Hotel(1, "Panamericano Bs As")
     val bookingResult = bookingProgram
-      .book(hotels, 1, HotelRequired(LocalDate.now(), LocalDate.now().plusDays(2), PaymentMethod(prepaid = false)))
+      .bookHotel(HotelRequired(LocalDate.now(), LocalDate.now().plusDays(2), PaymentMethod(prepaid = false)))(hotel)
       .flatMap(bookingProgram.bookHotel(HotelRequired(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5), PaymentMethod(prepaid = true))))
+      .flatMap(bookingProgram.bookHotel(HotelRequired(LocalDate.now().plusDays(6), LocalDate.now().plusDays(9), PaymentMethod(prepaid = true))))
 
     println(s"Finish with: $bookingResult")
   }
