@@ -144,7 +144,7 @@ object States {
 
   }
 
-  // Generalization of State Monad
+  // Generalization of State
   type StateT[S, +A] = S => (A, S)
 
   case class State[S, +A](run: S => (A, S)) {
