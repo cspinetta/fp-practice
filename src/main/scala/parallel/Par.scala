@@ -45,6 +45,12 @@ object Par {
     sequence(list)
   }
 
+//  def flatMap[A,B](p: Par[A])(choices: A => Par[B]): Par[B] =
+//    es => {
+//      val k = run(es)(p).get
+//      run(es)(choices(k))
+//    }
+
   def parFilter[A](as: List[A])(f: A => Boolean): Par[List[A]] = {
 //    as.foldRight(unit(List.empty[A]))((a, b) => if (f(a)) unit(a).map2(b)(_ :: _) else b)
 //    val pars: List[Par[List[A]]] = as.map
@@ -52,6 +58,9 @@ object Par {
     val pars: List[Par[List[A]]] = as map ((elem: A) => lazyUnit { if (f(elem)) List(elem) else List.empty })
     map(sequence(pars))(_.flatten)
   }
+
+  // extracts a value from a Par by actually performing the computation
+  def run[A](s: ExecutorService)(par: Par[A]): Future[A] = par(s) // par match { case ForkPar(thunk) => thunk(); case UnitPar(value) => value }
 
   object implicits {
 //    implicit class InfixMap2[A](p: Par[A]) {

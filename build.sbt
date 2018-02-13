@@ -28,5 +28,7 @@ libraryDependencies ++= Seq(
  "org.scalatest"         %%   "scalatest"              % "3.0.1"  % "test"
 )
 
+connectInput in run := true
+
 enablePlugins(JmhPlugin)
 
