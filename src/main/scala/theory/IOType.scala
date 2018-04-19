@@ -359,8 +359,24 @@ object FakeInterpreter extends ConsoleOps {
 
 object Runner extends App {
 
-  def onTerminal(): Unit =
-    new Program(TerminalInterpreter).binaryConverter.run
+  new Program(TerminalInterpreter).binaryConverter.run
 
-  onTerminal()
+
+
+  def divide2(dividend: Int,
+              divisor: Int): Int = {
+    if (divisor == 0)
+      throw new
+          RuntimeException("Divisor mustn't be 0")
+    dividend / divisor
+  }
+
+
+  def divide(dividend: Int,
+             divisor: Int): Either[String, Int] = {
+    if (divisor == 0) Left("Divisor mustn't be 0")
+    else Right(dividend / divisor)
+  }
+
+
 }
