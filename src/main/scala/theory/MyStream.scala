@@ -82,20 +82,58 @@ object MyStreamExamples {
       }
 
       def lift[I, O](f: I => O): Process[I, O] = liftOne(f).repeat
-    }
 
-//    def linesGt40k(filename: String): IO[Boolean] = IO {
-//      val src = io.Source.fromFile(filename)
-//      try {
-//        var count = 0
-//        val lines: Iterator[String] = src.getLines
-//        while (count <= 40000 && lines.hasNext) {
-//          lines.next
-//          count += 1
-//        }
-//        count > 40000
-//      }
-//      finally src.close
-//    }
+      def filter[I](f: I => Boolean): Process[I, I] = Await[I, I] {
+        case Some(i) if f(i) => Emit(i)
+        case _ => Halt()
+      } repeat
+
+      def addToEach(addValue: Double = 0): Process[Double, Double] = Await[Double, Double] {
+        case Some(value) => Emit(addValue + value)
+        case None => Halt()
+      } repeat
+
+      def sum: Process[Double, Double] = {
+        def go(acc: Double): Process[Double, Double] = Await[Double, Double] {
+          case Some(value) => Emit(acc + value, go(acc + value))
+          case None => Halt()
+        }
+        go(acc = 0)
+      }
+
+      def take[I](n: Int): Process[I, I] = {
+        def go(current: Int): Process[I, I] = Await[I, I] {
+          case Some(i) if current < n => Emit(i, go(current + 1))
+          case _                      => Halt()
+        }
+        go(current = 0)
+      }
+
+      def drop[I](n: Int): Process[I, I] = {
+        def go(current: Int): Process[I, I] = Await[I, I] {
+          case Some(_) if current < n => go(current = current + 1)
+          case Some(i) => Emit(i, go(current + 1).repeat)
+          case None => Halt()
+        }
+        go(current = 0)
+      }
+
+      def takeWhile[I](f: I => Boolean): Process[I, I] = {
+        def go(taking: Boolean): Process[I, I] = Await[I, I] {
+          case Some(i) if taking && f(i) => Emit(i, go(taking))
+          case _ => Halt()
+        }
+        go(taking = true)
+      }
+
+      def dropWhile[I](f: I => Boolean): Process[I, I] = {
+        def go(dropping: Boolean): Process[I, I] = Await[I, I] {
+          case Some(i) if dropping && f(i) => go(dropping)
+          case Some(i) => Emit(i, go(dropping = false).repeat)
+          case None => Halt()
+        }
+        go(dropping = true)
+      }
+    }
   }
 }
