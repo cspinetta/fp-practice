@@ -52,5 +52,13 @@ class MyStreamSpec extends FunSpec with Matchers {
     it("should calculate the average of the values seen so far (via loop() abstraction)") {
       Process.meanViaLoop(Stream(10,333,2,3)).toList should be(List(10, 171.5, 115, 87))
     }
+    it("should be possible to create a pipeline") {
+      (Process.filter((i: Int) => i % 2 == 0) |> Process.lift((i: Int) => s"it's $i"))(Stream(1,2,3,4,5,6))
+        .toList should be(List("it's 2", "it's 4", "it's 6"))
+    }
+    it("should be mappable") {
+      Process.filter((i: Int) => i % 2 == 0).map((i: Int) => i + 1)(Stream(1,2,3,4,5,6))
+        .toList should be(List(3, 5, 7))
+    }
   }
 }

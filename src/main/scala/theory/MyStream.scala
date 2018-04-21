@@ -69,7 +69,21 @@ object MyStreamExamples {
         }
         go(this)
       }
+
+      def |>[O2](next: Process[O, O2]): Process[I, O2] = next match {
+        case Halt() => Halt()
+        case Emit(head, tail) => Emit(head, this |> tail)
+        case Await(recv) => this match {
+          case Halt() => Halt()
+          case Emit(head, tail) => tail |> recv(Some(head))
+          case Await(recv2) => Await((input: Option[I]) => recv2(input) |> next)
+        }
+      }
+
+      def map[O2](f: O => O2): Process[I, O2] = this |> Process.lift(f)
+
     }
+
     case class Emit[-I, +O](head: O, tail: Process[I, O] = Halt()) extends Process[I, O]
     case class Await[-I, +O](recv: Option[I] => Process[I, O]) extends Process[I, O]
     case class Halt[-I, +O]() extends Process[I, O]
