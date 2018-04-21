@@ -36,7 +36,7 @@ object MyStreamExamples {
       * that must be driven forward with a `driver`:
       *
       *
-      *  - `Emit(head, tail)` indicated to the driver that the `head` value should be emitted to the
+      *  - `Emit(head, tail)` indicates to the driver that the `head` value should be emitted to the
       * output stream, and the machine should then be transitioned to the `tail` state.
       *
       *  - `Await(recv)` requests a value from the input stream. The driver should pass the
@@ -112,7 +112,7 @@ object MyStreamExamples {
       def drop[I](n: Int): Process[I, I] = {
         def go(current: Int): Process[I, I] = Await[I, I] {
           case Some(_) if current < n => go(current = current + 1)
-          case Some(i) => Emit(i, go(current + 1).repeat)
+          case Some(i) => Emit(i, go(current + 1))
           case None => Halt()
         }
         go(current = 0)
@@ -129,10 +129,43 @@ object MyStreamExamples {
       def dropWhile[I](f: I => Boolean): Process[I, I] = {
         def go(dropping: Boolean): Process[I, I] = Await[I, I] {
           case Some(i) if dropping && f(i) => go(dropping)
-          case Some(i) => Emit(i, go(dropping = false).repeat)
+          case Some(i) => Emit(i, go(dropping = false))
           case None => Halt()
         }
         go(dropping = true)
+      }
+
+      def count[I]: Process[I, Int] = {
+        def go(number: Int): Process[I, Int] = Await[I, Int] {
+          case Some(_) => Emit(number, go(number = number + 1))
+          case None => Halt()
+        }
+        go(number = 1)
+      }
+
+      def mean: Process[Double, Double] = {
+        def go(acc: Double, index: Double): Process[Double, Double] = Await[Double, Double] {
+          case Some(value) => Emit((acc + value) / index, go(acc + value, index + 1))
+          case None => Halt()
+        }
+        go(acc = 0, index = 1)
+      }
+
+      def loop[S, I, O](z: S)(f: (I, S) => (O, S)): Process[I, O] = Await[I, O] {
+        case Some(input) =>
+          val (output, newState) = f(input, z)
+          Emit(output, loop(newState)(f))
+        case None => Halt()
+      }
+
+      def sumViaLoop: Process[Double, Double] = loop(0D)((input, acc) => (input + acc, input + acc))
+
+      def countViaLoop[I]: Process[I, Int] = loop(1)((_, number) => (number, number + 1))
+
+      def meanViaLoop: Process[Double, Double] = loop((0D, 1)) {
+        case (input, (acc: Double, index: Int)) =>
+          val newAcc = acc + input
+          (newAcc / index, (newAcc, index + 1))
       }
     }
   }
