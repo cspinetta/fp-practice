@@ -1,11 +1,7 @@
 package theory
 
 
-class MyStream {
-
-}
-
-object MyStreamExamples {
+object MyStream {
 
   object ImperativeVersion {
     import IOType.IOv1._
