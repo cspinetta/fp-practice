@@ -58,6 +58,10 @@ class MyStreamSpec extends FunSpec with Matchers {
         Process.filter((i: Int) => i % 2 == 0).map((i: Int) => i + 1)(Stream(1,2,3,4,5,6))
           .toList should be(List(3, 5, 7))
       }
+      it("should be appendable") {
+        (Process.liftOne[Int, Int](identity) ++ Process.lift((i: Int) => i * 2))(Stream(1,2,3))
+          .toList should be(List(1, 4,6))
+      }
     }
   }
 }

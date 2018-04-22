@@ -76,6 +76,12 @@ object MyStream {
         }
       }
 
+      def ++[II <: I, OO >: O](next: Process[II, OO]): Process[II, OO] = this match {
+        case Halt() => next
+        case Emit(head, tail) => Emit(head, tail ++ next)
+        case Await(recv) => Await(recv andThen (_ ++ next))
+      }
+
       def map[O2](f: O => O2): Process[I, O2] = this |> Process.lift(f)
 
     }
